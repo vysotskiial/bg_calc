@@ -21,7 +21,7 @@ enum Tribe {
 };
 
 enum Skill {
-	Sheild = 1,
+	Shield = 1,
 	Taunt  = 1 << 1,
 	Cleave = 1 << 2,
 };

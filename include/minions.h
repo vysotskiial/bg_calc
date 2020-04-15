@@ -14,8 +14,9 @@ constexpr Minions deathrattle_minions[] = { Shredder, Rat };//TODO complete
 struct HSMinion {
 	int health;
 	int attack;
-	attributes::Deathrattle deathrattles;
-	attributes::Tribe tribe;
-	attributes::Skill skill;
+	unsigned deathrattles;
+	unsigned tribe;
+	unsigned skill;
+	HSMinion() {}
 	HSMinion(int id);
 };
