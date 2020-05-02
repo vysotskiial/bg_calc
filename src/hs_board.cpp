@@ -95,11 +95,12 @@ void HSBoard::process_attack(minion t) {
 
 	if (cleave) {
 		t++;
-		if (t != sides[target]->board.end())
-			sides[target]->take_damage(attack, t);
+		if (t != sides[target]->board.end()) {
+			sides[target]->take_damage(damage, t);
+		}
 		t--;
 		if (t != sides[target]->board.begin())
-			sides[target]->take_damage(attack, --t);
+			sides[target]->take_damage(damage, --t);
 	}
 
 	process_deathrattles();
@@ -184,9 +185,7 @@ void HSBoard::trigger_bomb(Side side) {
 
 void BoardSide::trigger_rat(minion dead)
 {
-	HSMinion ratling;
-	ratling.attack = 1;
-	ratling.health = 1;
+	HSMinion ratling(1, 1);
 	minion next = ++dead;
 	dead--;
 	board.insert(next, min(8 - board.size(), dead->attack), ratling);

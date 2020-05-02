@@ -1,25 +1,24 @@
 #include <gtest/gtest.h>
+#include "attributes.h"
 #include "hs_board.h"
 
 constexpr double eps = 0.00001;
+
+void init_list(std::list<HSMinion> &l, unsigned long attack, int health, unsigned num)
+{
+	HSMinion m(attack, health);
+	for (unsigned i = 0; i < num; i++)
+		l.push_back(m);
+}
 
 // 1;2 1;2  1;2  1;2
 //        vs
 // 1;2 1;2  1;2 (1;2)
 TEST(test, divine_shield)
 {
-	HSMinion m;
 	std::list<HSMinion> my;
-	std::list<HSMinion> enemy;
-
-	m.attack = 1;
-	m.health = 2;
-	m.skill = 0;
-
-	for (int i = 0; i < 4; i++) {
-		my.push_back(m);
-		enemy.push_back(m);
-	}
+	init_list(my, 1, 2, 4);
+	std::list<HSMinion> enemy = my;
 
 	(--my.end())->skill |= attributes::Shield;
 
@@ -33,18 +32,9 @@ TEST(test, divine_shield)
 // 3;2  1;2
 TEST(test, basic_fight)
 {
-	HSMinion m;
-
-	std::list<HSMinion> my, enemy;
-
-	m.attack = 1;
-	m.health = 2;
-	m.skill = 0;
-
-	for (int i = 0; i < 2; i++) {
-		my.push_back(m);
-		enemy.push_back(m);
-	}
+	std::list<HSMinion> my;
+	init_list(my, 1, 2, 2);
+	std::list<HSMinion> enemy = my;
 
 	my.begin()->attack = 3;
 	(++enemy.begin())->health = 3;
@@ -59,28 +49,29 @@ TEST(test, basic_fight)
 // rat bomb
 TEST(test, rat_and_bomb)
 {
-	HSMinion m;
+	std::list<HSMinion> my;
+	init_list(my, 2, 2, 2);
+	std::list<HSMinion> enemy = my;
 
-	std::list<HSMinion> side;
-
-	m.attack = 2;
-	m.health = 2;
-	m.skill = 0;
-
-	for (int i = 0; i < 2; i++) {
-		side.push_back(m);
-	}
-
-	std::list<HSMinion> other_side = side;
-
-	other_side.push_back(m);
-	minion min = side.begin();
+	enemy.push_back(HSMinion(2, 2));
+	minion min = my.begin();
 	min->deathrattles |= attributes::Deathrattle::Rat;
 	min++;
 	min->deathrattles |= attributes::Deathrattle::Bomb;
 
-	HSBoard b(side, other_side);
+	HSBoard b(my, enemy);
 	ASSERT_EQ(b.calc_odds(), 0.75);
+}
+
+TEST(test, cleave)
+{
+	std::list<HSMinion> my;
+	init_list(my, 4, 4, 4);
+	std::list<HSMinion> enemy = my;
+
+	my.begin()->skill |= attributes::Skill::Cleave;
+	HSBoard b(my, enemy);
+	ASSERT_TRUE(0.875 - b.calc_odds() < eps);
 }
 
 int main(int argc, char **argv)

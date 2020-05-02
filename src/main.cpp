@@ -4,28 +4,21 @@
 
 using namespace std;
 
+void init_list(list<HSMinion> &l, unsigned long attack, int health, unsigned num)
+{
+	HSMinion m(attack, health);
+	for (unsigned i = 0; i < num; i++)
+		l.push_back(m);
+}
+
 int main()
 {
-	HSMinion m;
+	std::list<HSMinion> my;
+	init_list(my, 4, 4, 2);
+	std::list<HSMinion> enemy = my;
 
-	std::list<HSMinion> side;
-
-	m.attack = 2;
-	m.health = 2;
-	m.skill = 0;
-
-	for (int i = 0; i < 2; i++) {
-		side.push_back(m);
-	}
-
-	std::list<HSMinion> other_side = side;
-	other_side.push_back(m);
-	minion min = side.begin();
-	min->deathrattles |= attributes::Deathrattle::Rat;
-	min++;
-	min->deathrattles |= attributes::Deathrattle::Bomb;
-
-	HSBoard b(other_side, side);
+	my.begin()->skill |= attributes::Skill::Cleave;
+	HSBoard b(my, enemy);
 
 	cout << b.calc_odds() << endl;;
 
