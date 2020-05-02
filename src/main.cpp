@@ -1,39 +1,32 @@
 #include <iostream>
+#include "attributes.h"
 #include "hs_board.h"
 
 using namespace std;
 
 int main()
 {
-	HSBoard b;
 	HSMinion m;
 
-	m.attack = 1;
-	m.health = 1;
+	std::list<HSMinion> side;
+
+	m.attack = 2;
+	m.health = 2;
 	m.skill = 0;
 
 	for (int i = 0; i < 2; i++) {
-		b.my_board.push_back(m);
-		b.enemy_board.push_back(m);
+		side.push_back(m);
 	}
 
-	b.my_board[0].attack = 3;
-	b.my_board[1].health = 2;
-	b.enemy_board[1].health = 3;
+	std::list<HSMinion> other_side = side;
+	other_side.push_back(m);
+	minion min = side.begin();
+	min->deathrattles |= attributes::Deathrattle::Rat;
+	min++;
+	min->deathrattles |= attributes::Deathrattle::Bomb;
 
-/*
-	b.my_board[6].skill |= attributes::Taunt;
-	b.my_board[5].skill |= attributes::Taunt;
-	b.my_board[1].skill |= attributes::Taunt;
-	b.my_board[3].skill |= attributes::Taunt;
-*/
+	HSBoard b(other_side, side);
 
-/*
-	b.enemy_board[6].skill |= attributes::Taunt;
-	b.enemy_board[5].skill |= attributes::Taunt;
-	b.enemy_board[3].skill |= attributes::Taunt;
-	b.enemy_board[1].skill |= attributes::Taunt;
-*/
 	cout << b.calc_odds() << endl;;
 
 	return 0;

@@ -3,41 +3,83 @@
 
 constexpr double eps = 0.00001;
 
-TEST(test, test_always_win)
+// 1;2 1;2  1;2  1;2
+//        vs
+// 1;2 1;2  1;2 (1;2)
+TEST(test, divine_shield)
 {
-	HSBoard b;
 	HSMinion m;
+	std::list<HSMinion> my;
+	std::list<HSMinion> enemy;
 
 	m.attack = 1;
 	m.health = 2;
 	m.skill = 0;
 
-	for (int i = 0; i < 3; i++) {
-		b.my_board.push_back(m);
-		b.enemy_board.push_back(m);
+	for (int i = 0; i < 4; i++) {
+		my.push_back(m);
+		enemy.push_back(m);
 	}
 
-	b.my_board[2].health = 3;
+	(--my.end())->skill |= attributes::Shield;
+
+	HSBoard b(my, enemy);
 
 	ASSERT_TRUE(1 - b.calc_odds() < eps);
 }
 
-TEST(test, test_75_percent)
+// 1;2  1;3
+//    vs
+// 3;2  1;2
+TEST(test, basic_fight)
 {
-	HSBoard b;
 	HSMinion m;
+
+	std::list<HSMinion> my, enemy;
 
 	m.attack = 1;
 	m.health = 2;
 	m.skill = 0;
 
 	for (int i = 0; i < 2; i++) {
-		b.my_board.push_back(m);
-		b.enemy_board.push_back(m);
+		my.push_back(m);
+		enemy.push_back(m);
 	}
 
-	b.my_board[0].attack = 3;
-	b.enemy_board[1].health = 3;
+	my.begin()->attack = 3;
+	(++enemy.begin())->health = 3;
+	HSBoard b(my, enemy);
+	ASSERT_EQ(b.calc_odds(), 0.8125);
+}
+
+
+// 2;2 2;2 2;2
+//     vs
+// 2;2 2;2
+// rat bomb
+TEST(test, rat_and_bomb)
+{
+	HSMinion m;
+
+	std::list<HSMinion> side;
+
+	m.attack = 2;
+	m.health = 2;
+	m.skill = 0;
+
+	for (int i = 0; i < 2; i++) {
+		side.push_back(m);
+	}
+
+	std::list<HSMinion> other_side = side;
+
+	other_side.push_back(m);
+	minion min = side.begin();
+	min->deathrattles |= attributes::Deathrattle::Rat;
+	min++;
+	min->deathrattles |= attributes::Deathrattle::Bomb;
+
+	HSBoard b(side, other_side);
 	ASSERT_EQ(b.calc_odds(), 0.75);
 }
 
