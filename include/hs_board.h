@@ -1,77 +1,80 @@
 #pragma once
-#include <iterator>//distance
-#include <map>
-#include <list>
-#include <stack>
+#include <cstring>
+#include <vector>
 #include "minions.h"
 
-class HSBoard;
+//Max minion has to be 8 because we trigger deathrattle before deleting
+//minion that had deathrattle
+constexpr unsigned MAX_MINIONS = 8;
 
-typedef std::list<HSMinion>::iterator minion;
 class BoardSide {
 friend class HSBoard;
 private:
-	std::list<HSMinion> board;
-	minion attacker;
-
-	bool attacker_died;
-
-	void take_damage(unsigned damage, minion target);
-	void trigger_rat(minion dead);
-	minion pop_dead();
-	void next_attacker();
-	bool empty() { return board.empty(); }
-	unsigned size() { return board.size(); }
-	BoardSide(const BoardSide &other): board(other.board), attacker_died(false)
-	{
-		if (!board.size()) return;
-		attacker = board.begin();
-		std::advance(attacker, std::distance<std::list<HSMinion>::const_iterator>(other.board.begin(), other.attacker));
+	HSMinion buf[MAX_MINIONS];
+	unsigned real_size{0};
+	unsigned attacker{0};
+	bool increase_attacker{false};
+public:
+	unsigned size() { return real_size; }
+	bool empty() { return real_size == 0; }
+	void push_back(const HSMinion &m) {
+		buf[real_size] = m;
+		real_size++;
 	}
-	void cleanup();
-	BoardSide(const std::list<HSMinion> &b): board(b), attacker(board.begin()), attacker_died(false) {}
+	HSMinion & operator[](unsigned idx)
+	{
+		return buf[idx];
+	}
+	void erase(unsigned idx) {
+		if (idx == attacker) increase_attacker = false;
+		if (idx < attacker) attacker--;
+		real_size--;
+		if (attacker >= real_size) attacker = 0;
+		if (idx == real_size) return;
+		memmove(buf + idx, buf + idx + 1, (real_size - idx) * sizeof(HSMinion));
+	}
+	void insert(unsigned pos, unsigned count, HSMinion &m) {
+		memmove(buf + pos + count, buf + pos, (real_size - pos) * sizeof(HSMinion));
+		for (unsigned i = 0; i < count; i++) buf[pos + i] = m;
+		real_size += count;
+	}
+	void take_damage(unsigned damage, unsigned target);
+	void trigger_rat(unsigned dead);
 };
 
 class HSBoard {
 private:
-	enum Side {
-		attack,
-		target
-	};
-	std::map<Side, BoardSide *> sides;
+	BoardSide my_side;
+	BoardSide enemy_side;
+	BoardSide *attack_side;
+	BoardSide *target_side;
 
-	std::stack<HSBoard *> *states;
+	std::vector<HSBoard> *states;
 	double odds;//odds of getting to current state
-	bool trigger_deathrattle(Side s);
-	void trigger_bomb(Side s);
+	bool trigger_deathrattle(bool my);
+	void trigger_bomb(bool my);
 	bool my_turn;
 	void print();
 	int add_next_states();
-	void process_attack(minion t);
+	void process_attack(unsigned t);
 	void process_deathrattles();
 	void swap_sides();
 	bool won()
 	{
-		if (my_turn) return !sides[Side::attack]->empty();
-		else return !sides[Side::target]->empty();
+		return !my_side.empty();
 	}
 public:
 	//My board has to be passed first real attacker is decided in calc_odds
-	HSBoard(const std::list<HSMinion> &my, const std::list<HSMinion> &enemy)
+	HSBoard(const BoardSide &my, const BoardSide &enemy)
+		:my_side(my), enemy_side(enemy), attack_side(&my_side), target_side(&enemy_side)
 	{
-		sides[Side::attack] = new BoardSide(my);
-		sides[Side::target] = new BoardSide(enemy);
 	}
-	HSBoard(const HSBoard &other): odds(other.odds), my_turn(other.my_turn)
+	HSBoard(const HSBoard &other)
+		: my_side(other.my_side), enemy_side(other.enemy_side), states(other.states),
+			odds(other.odds), my_turn(other.my_turn)
 	{
-		states = other.states;
-		sides[Side::attack] = new BoardSide(*other.sides.at(Side::attack));
-		sides[Side::target] = new BoardSide(*other.sides.at(Side::target));
-	}
-	~HSBoard()
-	{
-		delete sides[Side::attack];
-		delete sides[Side::target];
+		attack_side = my_turn ? &my_side : &enemy_side;
+		target_side = my_turn ? &enemy_side : &my_side;
 	}
 	double calc_odds();//Returns the odds of you winning the round
 };

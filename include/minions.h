@@ -12,7 +12,7 @@ enum Minions {
 constexpr Minions deathrattle_minions[] = { Shredder, Rat };//TODO complete
 
 struct HSMinion {
-	unsigned long attack;
+	unsigned attack;
 	int health;
 	unsigned deathrattles;
 	unsigned tribe;
@@ -22,4 +22,5 @@ struct HSMinion {
 	{
 	}
 	HSMinion(int id);
+	HSMinion() {}
 };

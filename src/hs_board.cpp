@@ -2,37 +2,37 @@
 #include <algorithm>
 #include "attributes.h"
 #include "hs_board.h"
-//TODO fuck magic constants
+
 using namespace std;
 
 double HSBoard::calc_odds() {
-	HSBoard *state;
-	states = new stack<HSBoard *>;
+	states = new std::vector<HSBoard>;
+	states->reserve(60);
 	double result = 0;
 	my_turn = true;
 
-	if (sides[attack]->size() == sides[target]->size()) odds = 0.5;
+	if (attack_side->size() == target_side->size()) odds = 0.5;
 	else odds = 1;
 
-	if (sides[attack]->size() >= sides[target]->size()) {
-		states->push(new HSBoard(*this));
+	if (attack_side->size() >= target_side->size()) {
+		states->push_back(HSBoard(*this));
 	}
 
-	if (sides[target]->size() >= sides[attack]->size()) {
+	if (target_side->size() >= attack_side->size()) {
 		swap_sides();
-		states->push(new HSBoard(*this));
+		states->push_back(HSBoard(*this));
 	}
 
+	HSBoard state(*this);
 	while (!states->empty()) {
-		state = states->top();
-		//state->print();
-		states->pop();
-		if (!state->add_next_states()) {
-			if (state->won()) {
-				result += state->odds;
+		new(&state) HSBoard(states->back());
+		states->pop_back();
+		//state.print();
+		if (!state.add_next_states()) {
+			if (state.won()) {
+				result += state.odds;
 			}
 		}
-		delete state;
 	}
 	delete states;
 
@@ -42,65 +42,66 @@ double HSBoard::calc_odds() {
 void HSBoard::swap_sides()
 {
 	my_turn = !my_turn;
-	void *buf = sides[attack];
-	sides[attack] = sides[target];
-	sides[target] = (BoardSide *)buf;
+	swap(attack_side, target_side);
 }
 
 void HSBoard::print()
 {
 	//print enemy at the top
-	std::list<HSMinion> &my = (my_turn) ? sides[attack]->board : sides[target]->board;
-	std::list<HSMinion> &enemy = (my_turn) ? sides[target]->board : sides[attack]->board;
 	cout << "-----" << endl;
-	for (auto i : enemy)
-		cout << i.attack << ";" << i.health << " ";
+	for (unsigned i = 0; i < enemy_side.size(); i++)
+		cout << enemy_side[i].attack << ";" << enemy_side[i].health << " ";
 	cout << endl;
-	for (auto i : my)
-		cout << i.attack << ";" << i.health << " ";
+	for (unsigned i = 0; i < my_side.size(); i++)
+		cout << my_side[i].attack << ";" << my_side[i].health << " ";
 	cout << endl;
 	cout << "-----" << endl;
 }
 
 int HSBoard::add_next_states()
 {
-	if (sides[attack]->empty() || sides[target]->empty()) return 0;
+	if (target_side->empty() || attack_side->empty()) return 0;
+
+	if (attack_side->increase_attacker) {
+		attack_side->attacker++;
+		if (attack_side->attacker >= attack_side->size()) {
+			attack_side->attacker = 0;
+		}
+	}
+
+	attack_side->increase_attacker = true;
 
 	int taunt_count = 0;
 	//calculate number of taunts
-	for (auto i : sides[target]->board)
-		if (i.skill & attributes::Taunt)
+	for (unsigned i = 0; i < target_side->size(); i++)
+		if ((*target_side)[i].skill & attributes::Taunt)
 			taunt_count++;
 
-	int target_num = (taunt_count) ? taunt_count : sides[target]->size();
+	int target_num = (taunt_count) ? taunt_count : target_side->size();
 	odds /= target_num;
 
-	unsigned i = 0;
-	for (auto it = sides[target]->board.begin(); it != sides[target]->board.end(); i++, it++)
-		if ((it->skill & attributes::Taunt) || !taunt_count) {
-			HSBoard *new_state = new HSBoard(*this);
-			minion t = new_state->sides[target]->board.begin();
-			advance(t, i);
-			new_state->process_attack(t);
+	for (unsigned i = 0; i < target_side->size(); i++) {
+		if (((*target_side)[i].skill & attributes::Taunt) || !taunt_count) {
+			HSBoard new_state(*this);
+			new_state.process_attack(i);
 		}
+	}
 	return 1;
 }
 
-void HSBoard::process_attack(minion t) {
-	int damage = sides[attack]->attacker->attack;
-	bool cleave = sides[attack]->attacker->skill & attributes::Cleave;
+void HSBoard::process_attack(unsigned t) {
+	int damage = (*attack_side)[attack_side->attacker].attack;
+	bool cleave = (*attack_side)[attack_side->attacker].skill & attributes::Cleave;
 
-	sides[attack]->take_damage(t->attack, sides[attack]->attacker);
-	sides[target]->take_damage(damage, t);
+	attack_side->take_damage((*target_side)[t].attack, attack_side->attacker);
+	target_side->take_damage(damage, t);
 
 	if (cleave) {
-		t++;
-		if (t != sides[target]->board.end()) {
-			sides[target]->take_damage(damage, t);
+		if (t != target_side->size() - 1) {
+			target_side->take_damage(damage, t + 1);
 		}
-		t--;
-		if (t != sides[target]->board.begin())
-			sides[target]->take_damage(damage, --t);
+		if (t != 0)
+			target_side->take_damage(damage, t - 1);
 	}
 
 	process_deathrattles();
@@ -109,101 +110,76 @@ void HSBoard::process_attack(minion t) {
 
 void HSBoard::process_deathrattles()
 {
-	while (trigger_deathrattle(attack) || trigger_deathrattle(target));
-
-	if (!sides[attack]->attacker_died) sides[attack]->next_attacker();
+	while (trigger_deathrattle(my_turn) || trigger_deathrattle(!my_turn));
 	swap_sides();
-	states->push(this);
+	states->push_back(*this);
 }
 
-minion BoardSide::pop_dead()
+bool HSBoard::trigger_deathrattle(bool my)
 {
-	minion result = board.begin();
-	for (; result != board.end(); result++)
-		if (result->health <= 0)
-			return result;
+	BoardSide &side = my ? my_side : enemy_side;
+	unsigned dead = 0;
+	for (; dead < side.size(); dead++)
+		if (side[dead].health <= 0) break;
 
-	return result;
-}
+	if (dead == side.size()) return false;
 
-bool HSBoard::trigger_deathrattle(Side side)
-{
-	minion dead = sides[side]->pop_dead();
-	if (sides[side]->pop_dead() == sides[side]->board.end()) return false;
-
-	Side other_side = (side == attack) ? target : attack;
-	switch(dead->deathrattles) {
+	switch(side[dead].deathrattles) {
 		case attributes::Deathrattle::Bomb:
-			// Divide the odds TODO
-			if (sides[side]->attacker == dead) {
-				sides[side]->attacker_died = true;
-				sides[side]->next_attacker();
-			}
-			sides[side]->board.erase(dead);
-			trigger_bomb(other_side);
+			side.erase(dead);
+			trigger_bomb(!my);
 			return true;
 		case attributes::Deathrattle::Rat:
-			sides[side]->trigger_rat(dead);
+			side.trigger_rat(dead);
 			break;
 		default:
 			break;
 	}
 
-	if (sides[side]->attacker == dead) {
-		sides[side]->next_attacker();
-		sides[side]->attacker_died = true;
-	}
-	sides[side]->board.erase(dead);
+	side.erase(dead);
 	return true;
 }
 
-void HSBoard::trigger_bomb(Side side) {
+void HSBoard::trigger_bomb(bool my) {
+	BoardSide &side = my ? my_side : enemy_side;
 	bool first = true;
 	unsigned variant_num = 0;
-	for (auto m : sides[side]->board) if (m.health > 0) variant_num++;
+	for (unsigned i = 0; i < side.size(); i++)
+		if (side[i].health > 0) variant_num++;
 	odds /= variant_num;
 	HSBoard copy(*this);
 
-	unsigned distance = 0;
-	for (auto it = sides[side]->board.begin(); it != sides[side]->board.end(); it++, distance++) {
+	for (unsigned i = 0; i < side.size(); i++) {
 		//Dead minion cannot be target
-		if (it->health <= 0) continue;
+		if (side[i].health <= 0) continue;
 		//First target is handled by current instance of HSBoard
 		if (first) {
-			sides[side]->take_damage(4, it);
+			side.take_damage(BombDamage, i);
 			first = false;
 			continue;
 		}
 		//For every other target create new instance of HSBoard
-		HSBoard *b = new HSBoard(copy);
-		minion t = b->sides[side]->board.begin();
-		advance(t, distance);
-		b->sides[side]->take_damage(4, t);
-		b->process_deathrattles();
+		HSBoard b(copy);
+		BoardSide *s = my ? &b.my_side : & b.enemy_side;
+		s->take_damage(BombDamage, i);
+		b.process_deathrattles();
 	}
 }
 
-void BoardSide::trigger_rat(minion dead)
+void BoardSide::trigger_rat(unsigned dead)
 {
 	HSMinion ratling(1, 1);
-	minion next = ++dead;
-	dead--;
-	board.insert(next, min(8 - board.size(), dead->attack), ratling);
+	insert(dead + 1, min(MAX_MINIONS - real_size, buf[dead].attack), ratling);
 }
 
-void BoardSide::take_damage(unsigned damage, minion target)
+void BoardSide::take_damage(unsigned damage, unsigned t)
 {
-	if (target->skill & attributes::Shield) {
-		target->skill &= ~attributes::Shield;
+	HSMinion &targ = buf[t];
+	if (targ.skill & attributes::Shield) {
+		targ.skill &= ~attributes::Shield;
 		return;
 	}
-	target->health -= damage;
+	targ.health -= damage;
 
 	return;
-}
-
-void BoardSide::next_attacker()
-{
-	if (++attacker == board.end())
-		attacker = board.begin();
 }

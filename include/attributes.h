@@ -1,5 +1,7 @@
 #pragma once
 
+constexpr unsigned BombDamage = 4;
+
 namespace attributes {
 
 enum Deathrattle {

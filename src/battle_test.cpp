@@ -1,14 +1,13 @@
 #include <gtest/gtest.h>
-#include "attributes.h"
 #include "hs_board.h"
 
 constexpr double eps = 0.00001;
 
-void init_list(std::list<HSMinion> &l, unsigned long attack, int health, unsigned num)
+void init_vec(BoardSide &v, unsigned long attack, int health, unsigned num)
 {
 	HSMinion m(attack, health);
 	for (unsigned i = 0; i < num; i++)
-		l.push_back(m);
+		v.push_back(m);
 }
 
 // 1;2 1;2  1;2  1;2
@@ -16,15 +15,14 @@ void init_list(std::list<HSMinion> &l, unsigned long attack, int health, unsigne
 // 1;2 1;2  1;2 (1;2)
 TEST(test, divine_shield)
 {
-	std::list<HSMinion> my;
-	init_list(my, 1, 2, 4);
-	std::list<HSMinion> enemy = my;
+	BoardSide my;
+	init_vec(my, 1, 2, 4);
+	BoardSide enemy = my;
 
-	(--my.end())->skill |= attributes::Shield;
+	my[3].skill |= attributes::Shield;
 
 	HSBoard b(my, enemy);
-
-	ASSERT_TRUE(1 - b.calc_odds() < eps);
+	ASSERT_TRUE(1 - b.calc_odds() < eps) << "odds are " << b.calc_odds();
 }
 
 // 1;2  1;3
@@ -32,12 +30,12 @@ TEST(test, divine_shield)
 // 3;2  1;2
 TEST(test, basic_fight)
 {
-	std::list<HSMinion> my;
-	init_list(my, 1, 2, 2);
-	std::list<HSMinion> enemy = my;
+	BoardSide my;
+	init_vec(my, 1, 2, 2);
+	BoardSide enemy = my;
 
-	my.begin()->attack = 3;
-	(++enemy.begin())->health = 3;
+	my[0].attack = 3;
+	enemy[1].health = 3;
 	HSBoard b(my, enemy);
 	ASSERT_EQ(b.calc_odds(), 0.8125);
 }
@@ -49,15 +47,13 @@ TEST(test, basic_fight)
 // rat bomb
 TEST(test, rat_and_bomb)
 {
-	std::list<HSMinion> my;
-	init_list(my, 2, 2, 2);
-	std::list<HSMinion> enemy = my;
+	BoardSide my;
+	init_vec(my, 2, 2, 2);
+	BoardSide enemy = my;
 
 	enemy.push_back(HSMinion(2, 2));
-	minion min = my.begin();
-	min->deathrattles |= attributes::Deathrattle::Rat;
-	min++;
-	min->deathrattles |= attributes::Deathrattle::Bomb;
+	my[0].deathrattles |= attributes::Deathrattle::Rat;
+	my[1].deathrattles |= attributes::Deathrattle::Bomb;
 
 	HSBoard b(my, enemy);
 	ASSERT_EQ(b.calc_odds(), 0.75);
@@ -65,11 +61,11 @@ TEST(test, rat_and_bomb)
 
 TEST(test, cleave)
 {
-	std::list<HSMinion> my;
-	init_list(my, 4, 4, 4);
-	std::list<HSMinion> enemy = my;
+	BoardSide my;
+	init_vec(my, 4, 4, 4);
+	BoardSide enemy = my;
 
-	my.begin()->skill |= attributes::Skill::Cleave;
+	my[0].skill |= attributes::Skill::Cleave;
 	HSBoard b(my, enemy);
 	ASSERT_TRUE(0.875 - b.calc_odds() < eps);
 }
