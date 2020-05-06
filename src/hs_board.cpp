@@ -23,9 +23,8 @@ double HSBoard::calc_odds() {
 		states->push_back(HSBoard(*this));
 	}
 
-	HSBoard state(*this);
 	while (!states->empty()) {
-		new(&state) HSBoard(states->back());
+		HSBoard state(states->back());
 		states->pop_back();
 		//state.print();
 		if (!state.add_next_states()) {
