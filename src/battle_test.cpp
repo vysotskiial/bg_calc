@@ -40,7 +40,6 @@ TEST(test, basic_fight)
 	ASSERT_EQ(b.calc_odds(), 0.8125);
 }
 
-
 // 2;2 2;2 2;2
 //     vs
 // 2;2 2;2
