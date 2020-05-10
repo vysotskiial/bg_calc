@@ -10,9 +10,14 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_executable(bg_calc src/hs_board.cpp src/main.cpp src/minions.cpp)
+add_executable(parser src/parser.cpp)
 
 target_include_directories(bg_calc PRIVATE include)
+
 target_link_libraries(bg_calc Threads::Threads)
+
+target_include_directories(parser PRIVATE include)
+
 
 if(GTest_FOUND)
 	add_executable(battle_test src/battle_test.cpp src/minions.cpp src/hs_board.cpp)
