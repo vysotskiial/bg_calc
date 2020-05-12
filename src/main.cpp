@@ -19,7 +19,7 @@ int main()
 
 	BoardSide enemy = my;
 
-	// my[4].skill |= attributes::Skill::Taunt;
+	my[4].skill |= attributes::Skill::Taunt;
 
 	HSBoard b(my, enemy);
 

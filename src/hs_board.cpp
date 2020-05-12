@@ -1,5 +1,6 @@
 #include <iostream>
 #include <algorithm>
+#include <future>
 #include "attributes.h"
 #include "hs_board.h"
 
@@ -7,24 +8,32 @@ using namespace std;
 
 double HSBoard::calc_odds()
 {
-	states = new std::vector<HSBoard>;
-	states->reserve(60);
-	double result = 0;
 	my_turn = true;
+	future<double> first_half;
 
-	if (attack_side->size() == target_side->size())
+	if (attack_side->size() == target_side->size()) {
 		odds = 0.5;
-	else
+		HSBoard copy(*this);
+		first_half = async(launch::async, &HSBoard::calc_half, &copy);
+	}
+	else {
 		odds = 1;
-
-	if (attack_side->size() >= target_side->size()) {
-		states->push_back(HSBoard(*this));
 	}
 
-	if (target_side->size() >= attack_side->size()) {
+	if (attack_side->size() <= target_side->size())
 		swap_sides();
-		states->push_back(HSBoard(*this));
-	}
+
+	double second_half = calc_half();
+	return (odds == 1) ? second_half : second_half + first_half.get();
+}
+
+double HSBoard::calc_half()
+{
+	states = new std::vector<HSBoard>;
+	states->reserve(40);
+	double result = 0;
+
+	states->push_back(*this);
 
 	while (!states->empty()) {
 		HSBoard state(states->back());

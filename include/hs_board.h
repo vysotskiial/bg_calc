@@ -67,6 +67,7 @@ private:
 	void process_deathrattles();
 	void swap_sides();
 	bool won() { return !my_side.empty(); }
+	double calc_half();
 
 public:
 	// My board has to be passed first real attacker is decided in calc_odds
