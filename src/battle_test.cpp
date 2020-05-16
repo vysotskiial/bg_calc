@@ -1,8 +1,6 @@
 #include <gtest/gtest.h>
 #include "hs_board.h"
 
-constexpr double eps = 0.00001;
-
 void init_vec(BoardSide &v, unsigned long attack, int health, unsigned num)
 {
 	HSMinion m(attack, health);
@@ -22,7 +20,7 @@ TEST(test, divine_shield)
 	my[3].skill |= attributes::Shield;
 
 	HSBoard b(my, enemy);
-	ASSERT_TRUE(1 - b.calc_odds() < eps) << "odds are " << b.calc_odds();
+	ASSERT_FLOAT_EQ(b.calc_odds(), 1.);
 }
 
 // 1;2  1;3
@@ -37,7 +35,7 @@ TEST(test, basic_fight)
 	my[0].attack = 3;
 	enemy[1].health = 3;
 	HSBoard b(my, enemy);
-	ASSERT_EQ(b.calc_odds(), 0.8125);
+	ASSERT_DOUBLE_EQ(b.calc_odds(), 0.8125);
 }
 
 // 2;2 2;2 2;2
@@ -55,7 +53,7 @@ TEST(test, rat_and_bomb)
 	my[1].deathrattles |= attributes::Deathrattle::Bomb;
 
 	HSBoard b(my, enemy);
-	ASSERT_EQ(b.calc_odds(), 0.75);
+	ASSERT_DOUBLE_EQ(b.calc_odds(), 0.75);
 }
 
 TEST(test, cleave)
@@ -66,7 +64,7 @@ TEST(test, cleave)
 
 	my[0].skill |= attributes::Skill::Cleave;
 	HSBoard b(my, enemy);
-	ASSERT_TRUE(0.875 - b.calc_odds() < eps);
+	ASSERT_DOUBLE_EQ(0.875, b.calc_odds());
 }
 
 int main(int argc, char **argv)

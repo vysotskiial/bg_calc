@@ -25,7 +25,6 @@ int main()
 
 	clock_t c_start = clock();
 	cout << b.calc_odds() << endl;
-	;
 	clock_t c_end = std::clock();
 
 	long double time_elapsed_ms = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
