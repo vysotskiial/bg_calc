@@ -1,9 +1,10 @@
 #include <iostream>
 #include <ctime>
-#include "attributes.h"
+#include <chrono>
 #include "hs_board.h"
 
 using namespace std;
+using Sec = chrono::duration<double>;
 
 void init_vec(BoardSide &v, unsigned long attack, int health, unsigned num)
 {
@@ -22,12 +23,15 @@ int main()
 	my[4].skill |= attributes::Skill::Taunt;
 
 	HSBoard b(my, enemy);
-
-	clock_t c_start = clock();
+	auto wall_start = chrono::system_clock::now();
+	auto cpu_start = double(clock());
 	cout << b.calc_odds() << endl;
-	clock_t c_end = std::clock();
+	auto cpu_end = double(clock());
+	auto wall_end = chrono::system_clock::now();
 
-	long double time_elapsed_ms = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
-	std::cout << "CPU time used: " << time_elapsed_ms << " ms\n";
+	auto cpu_time = (cpu_end - cpu_start) / CLOCKS_PER_SEC;
+	auto wall_time = chrono::duration_cast<Sec>(wall_end - wall_start).count();
+	cout << "CPU time used: " << cpu_time << " s" << endl;
+	cout << "Wall time passed: " << wall_time << " s" << endl;
 	return 0;
 }
