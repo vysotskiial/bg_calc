@@ -56,6 +56,10 @@ TEST(test, rat_and_bomb)
 	ASSERT_DOUBLE_EQ(b.calc_odds(), 0.75);
 }
 
+// 4;4   4;4  4;4 4;4
+//          vs
+// 4;4   4;4  4;4 4;4
+// cleave
 TEST(test, cleave)
 {
 	BoardSide my;
@@ -65,6 +69,23 @@ TEST(test, cleave)
 	my[0].skill |= attributes::Skill::Cleave;
 	HSBoard b(my, enemy);
 	ASSERT_DOUBLE_EQ(0.875, b.calc_odds());
+}
+
+// Test is written when Coiler only has two options -- rat and bomb
+// Coiler
+//  7;7
+//   vs
+//  7;16
+TEST(test, coiler)
+{
+	BoardSide my;
+	HSMinion coiler(Coiler);
+	my.push_back(coiler);
+	HSMinion dude(7, 16);
+	BoardSide enemy;
+	enemy.push_back(dude);
+	HSBoard b(enemy, my);
+	ASSERT_DOUBLE_EQ(0.25, b.calc_odds());
 }
 
 int main(int argc, char **argv)

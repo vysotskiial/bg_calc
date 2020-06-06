@@ -1,11 +1,10 @@
 #pragma once
 #include <cstring>
 #include <vector>
+#include <array>
 #include "minions.h"
 
-// Max minion has to be 8 because we trigger deathrattle before deleting
-// minion that had deathrattle
-constexpr unsigned MAX_MINIONS = 8;
+constexpr unsigned MAX_MINIONS = 7;
 
 class BoardSide {
 	friend class HSBoard;
@@ -38,7 +37,7 @@ public:
 			return;
 		memmove(buf + idx, buf + idx + 1, (real_size - idx) * sizeof(HSMinion));
 	}
-	void insert(unsigned pos, unsigned count, HSMinion &m)
+	void insert(unsigned pos, unsigned count, const HSMinion &m)
 	{
 		memmove(buf + pos + count, buf + pos, (real_size - pos) * sizeof(HSMinion));
 		for (unsigned i = 0; i < count; i++)
@@ -46,7 +45,7 @@ public:
 		real_size += count;
 	}
 	void take_damage(unsigned damage, unsigned target);
-	void trigger_rat(unsigned dead);
+	void trigger_summon(unsigned dead, Minion id, unsigned num);
 };
 
 class HSBoard {
@@ -68,6 +67,36 @@ private:
 	void swap_sides();
 	bool won() { return !my_side.empty(); }
 	double calc_half();
+
+	template<size_t size>
+	void trigger_summon_optional(bool my, const std::array<Minion, size> &options,
+	                             unsigned count, unsigned pos,
+	                             bool initial = true)
+	{
+		BoardSide &side = my ? my_side : enemy_side;
+		auto real_count = std::min(MAX_MINIONS - side.real_size, count);
+		if (!real_count) {
+			if (!initial)
+				process_deathrattles();
+			return;
+		}
+		bool first = true;
+		odds /= size;
+		HSBoard copy(*this);
+
+		for (auto minion : options) {
+			if (first) {
+				side.insert(pos, 1, HSMinion(minion));
+				trigger_summon_optional(my, options, count - 1, pos, initial);
+				first = false;
+				continue;
+			}
+			HSBoard b(copy);
+			BoardSide &s = my ? b.my_side : b.enemy_side;
+			s.insert(pos, 1, HSMinion(minion));
+			b.trigger_summon_optional(my, options, count - 1, pos, false);
+		}
+	}
 
 public:
 	// My board has to be passed first real attacker is decided in calc_odds

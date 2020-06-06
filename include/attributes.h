@@ -13,6 +13,7 @@ enum Deathrattle {
 	Bomb = 1 << 5,
 	Wolf = 1 << 6,
 	Divine = 1 << 7,
+	Coiler = 1 << 8,
 };
 
 enum Tribe {

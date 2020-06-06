@@ -2,23 +2,19 @@
 #include "attributes.h"
 
 // TODO fill this enum with minions that can spawn from other minions
-enum Minions { Shredder, Rat };
-
-// Also we need to group minions by their parents
-// for example deathrattle group for gascoiler would be something like
-constexpr Minions deathrattle_minions[] = {Shredder, Rat}; // TODO complete
+enum Minion { Bomb, Rat, Coiler, Ratling };
 
 struct HSMinion {
 	unsigned attack;
 	int health;
-	unsigned deathrattles;
-	unsigned tribe;
-	unsigned skill;
+	unsigned deathrattles{0};
+	unsigned tribe{0};
+	unsigned skill{0};
 	HSMinion(unsigned long a, int h, unsigned d = 0, unsigned t = 0,
 	         unsigned s = 0)
 	  : attack(a), health(h), deathrattles(d), tribe(t), skill(s)
 	{
 	}
-	HSMinion(int id);
+	HSMinion(Minion id);
 	HSMinion() {}
 };

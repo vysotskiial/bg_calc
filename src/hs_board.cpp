@@ -6,6 +6,10 @@
 
 using namespace std;
 
+// Also we need to group minions by their parents
+// for example deathrattle group for gascoiler would be something like
+constexpr std::array from_coiler = {Bomb, Rat}; // TODO complete
+
 double HSBoard::calc_odds()
 {
 	my_turn = true;
@@ -139,20 +143,23 @@ bool HSBoard::trigger_deathrattle(bool my)
 
 	if (dead == side.size())
 		return false;
+	HSMinion m_dead = side[dead];
+	side.erase(dead);
 
-	switch (side[dead].deathrattles) {
+	switch (m_dead.deathrattles) {
 	case attributes::Deathrattle::Bomb:
-		side.erase(dead);
 		trigger_bomb(!my);
-		return true;
+		break;
 	case attributes::Deathrattle::Rat:
-		side.trigger_rat(dead);
+		side.trigger_summon(dead, Ratling, m_dead.attack);
+		break;
+	case attributes::Deathrattle::Coiler:
+		trigger_summon_optional(my, from_coiler, 2, dead);
 		break;
 	default:
 		break;
 	}
 
-	side.erase(dead);
 	return true;
 }
 
@@ -164,6 +171,8 @@ void HSBoard::trigger_bomb(bool my)
 	for (unsigned i = 0; i < side.size(); i++)
 		if (side[i].health > 0)
 			variant_num++;
+	if (!variant_num)
+		return;
 	odds /= variant_num;
 	HSBoard copy(*this);
 
@@ -185,10 +194,9 @@ void HSBoard::trigger_bomb(bool my)
 	}
 }
 
-void BoardSide::trigger_rat(unsigned dead)
+void BoardSide::trigger_summon(unsigned dead, Minion id, unsigned num)
 {
-	HSMinion ratling(1, 1);
-	insert(dead + 1, min(MAX_MINIONS - real_size, buf[dead].attack), ratling);
+	insert(dead, min(MAX_MINIONS - real_size, num), HSMinion(id));
 }
 
 void BoardSide::take_damage(unsigned damage, unsigned t)
