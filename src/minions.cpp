@@ -31,3 +31,21 @@ HSMinion::HSMinion(Minion id)
 		break;
 	}
 }
+
+std::ostream &operator<<(std::ostream &ostr, const HSMinion &m)
+{
+	if (m.skill & attributes::Skill::Shield)
+		ostr << '(';
+	if (m.skill & attributes::Skill::Taunt)
+		ostr << '[';
+	if (m.skill & attributes::Skill::Cleave)
+		ostr << "<-";
+	ostr << m.attack << ';' << m.health;
+	if (m.skill & attributes::Skill::Cleave)
+		ostr << "->";
+	if (m.skill & attributes::Skill::Taunt)
+		ostr << ']';
+	if (m.skill & attributes::Skill::Shield)
+		ostr << ')';
+	return ostr;
+}

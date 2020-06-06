@@ -63,14 +63,14 @@ void HSBoard::swap_sides()
 void HSBoard::print()
 {
 	// print enemy at the top
-	cout << "-----" << endl;
+	cout << "-----\n";
 	for (unsigned i = 0; i < enemy_side.size(); i++)
-		cout << enemy_side[i].attack << ";" << enemy_side[i].health << " ";
-	cout << endl;
+		cout << enemy_side[i] << " ";
+	cout << '\n';
 	for (unsigned i = 0; i < my_side.size(); i++)
-		cout << my_side[i].attack << ";" << my_side[i].health << " ";
-	cout << endl;
-	cout << "-----" << endl;
+		cout << my_side[i] << " ";
+	cout << '\n';
+	cout << "-----\n";
 }
 
 int HSBoard::add_next_states()

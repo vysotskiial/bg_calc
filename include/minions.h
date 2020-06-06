@@ -1,4 +1,5 @@
 #pragma once
+#include <ostream>
 #include "attributes.h"
 
 // TODO fill this enum with minions that can spawn from other minions
@@ -18,3 +19,5 @@ struct HSMinion {
 	HSMinion(Minion id);
 	HSMinion() {}
 };
+
+std::ostream &operator<<(std::ostream &ostr, const HSMinion &m);
