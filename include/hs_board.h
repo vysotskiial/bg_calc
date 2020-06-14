@@ -46,6 +46,7 @@ public:
 	}
 	void take_damage(unsigned damage, unsigned target);
 	void trigger_summon(unsigned dead, Minion id, unsigned num);
+	void trigger_buff_all(const HSMinion &buff);
 };
 
 class HSBoard {
@@ -59,6 +60,7 @@ private:
 	double odds; // odds of getting to current state
 	bool trigger_deathrattle(bool my);
 	void trigger_bomb(bool my);
+	void trigger_buff_random(bool my, const HSMinion &buff);
 	bool my_turn;
 	void print();
 	int add_next_states();

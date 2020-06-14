@@ -27,7 +27,21 @@ HSMinion::HSMinion(Minion id)
 		tribe = attributes::Tribe::Mech;
 		deathrattles = attributes::Deathrattle::Bomb;
 		break;
-	default:
+	case Nzoth:
+		health = 2;
+		attack = 2;
+		deathrattles = attributes::Deathrattle::Nzoth;
+		break;
+	case Selfless:
+		health = 1;
+		attack = 2;
+		deathrattles = attributes::Deathrattle::Selfless;
+		break;
+	case Goldrinn:
+		health = 4;
+		attack = 4;
+		tribe = attributes::Tribe::Beast;
+		deathrattles = attributes::Deathrattle::Goldrinn;
 		break;
 	}
 }

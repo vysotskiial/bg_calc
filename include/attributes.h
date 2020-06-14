@@ -5,15 +5,13 @@ constexpr unsigned BombDamage = 4;
 namespace attributes {
 
 enum Deathrattle {
-	ThreeMechs = 1,
-	Bgurgle = 1 << 1,
-	Shredder = 1 << 2,
-	Sneeds = 1 << 3,
-	Rat = 1 << 4,
-	Bomb = 1 << 5,
-	Wolf = 1 << 6,
-	Divine = 1 << 7,
-	Coiler = 1 << 8,
+	No = 0,
+	Rat,
+	Bomb,
+	Coiler,
+	Nzoth,
+	Selfless,
+	Goldrinn,
 };
 
 enum Tribe {
@@ -21,6 +19,7 @@ enum Tribe {
 	Demon = 1 << 2,
 	Beast = 1 << 3,
 	Mech = 1 << 4,
+	All = -1u,
 };
 
 enum Skill {

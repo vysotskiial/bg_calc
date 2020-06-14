@@ -49,8 +49,8 @@ TEST(test, rat_and_bomb)
 	BoardSide enemy = my;
 
 	enemy.push_back(HSMinion(2, 2));
-	my[0].deathrattles |= attributes::Deathrattle::Rat;
-	my[1].deathrattles |= attributes::Deathrattle::Bomb;
+	my[0].deathrattles = attributes::Deathrattle::Rat;
+	my[1].deathrattles = attributes::Deathrattle::Bomb;
 
 	HSBoard b(my, enemy);
 	ASSERT_DOUBLE_EQ(b.calc_odds(), 0.75);
@@ -79,13 +79,29 @@ TEST(test, cleave)
 TEST(test, coiler)
 {
 	BoardSide my;
-	HSMinion coiler(Coiler);
-	my.push_back(coiler);
-	HSMinion dude(7, 16);
+	my.push_back(HSMinion(Coiler));
 	BoardSide enemy;
-	enemy.push_back(dude);
+	enemy.push_back(HSMinion(7, 16));
 	HSBoard b(enemy, my);
 	ASSERT_DOUBLE_EQ(0.25, b.calc_odds());
+}
+
+// Goldrinn Rat
+//   4;4    2;2
+//       vs
+//  2;2    2;1    5;199
+// Nzoth Selfless
+TEST(test, buff_deathrattles)
+{
+	BoardSide enemy;
+	enemy.push_back(HSMinion(Goldrinn));
+	enemy.push_back(HSMinion(Rat));
+	BoardSide my;
+	my.push_back(HSMinion(Nzoth));
+	my.push_back(HSMinion(Selfless));
+	my.push_back(HSMinion(5, 5));
+	HSBoard b(my, enemy);
+	ASSERT_DOUBLE_EQ(1. / 6, b.calc_odds());
 }
 
 int main(int argc, char **argv)

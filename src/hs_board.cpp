@@ -156,11 +156,72 @@ bool HSBoard::trigger_deathrattle(bool my)
 	case attributes::Deathrattle::Coiler:
 		trigger_summon_optional(my, from_coiler, 2, dead);
 		break;
-	default:
+	case attributes::Deathrattle::Nzoth:
+		side.trigger_buff_all(
+		  HSMinion(1, 1, attributes::Deathrattle::No, attributes::Tribe::All));
+		break;
+	case attributes::Deathrattle::Selfless:
+		trigger_buff_random(my, HSMinion(0, 0, attributes::Deathrattle::No,
+		                                 attributes::Tribe::All,
+		                                 attributes::Skill::Shield));
+		break;
+	case attributes::Deathrattle::Goldrinn:
+		side.trigger_buff_all(
+		  HSMinion(4, 4, attributes::Deathrattle::No, attributes::Tribe::Beast));
+		break;
+	case attributes::Deathrattle::No:
 		break;
 	}
 
 	return true;
+}
+
+// Arguments tribe -- tribe of minions to apply buff to
+// Stats and skill -- what to apply
+void BoardSide::trigger_buff_all(const HSMinion &buff)
+{
+	for (auto i = 0u; i < real_size; i++)
+		if ((buff.tribe == attributes::Tribe::All) || (buf[i].tribe & buff.tribe)) {
+			buf[i].attack += buff.attack;
+			buf[i].health += buff.health;
+			buf[i].skill |= buff.skill;
+		}
+}
+
+void HSBoard::trigger_buff_random(bool my, const HSMinion &buff)
+{
+	BoardSide &side = my ? my_side : enemy_side;
+	int variant_num = 0;
+	for (auto i = 0u; i < side.real_size; i++) {
+		if ((buff.tribe == attributes::Tribe::All) ||
+		    (side.buf[i].tribe & buff.tribe))
+			variant_num++;
+	}
+
+	if (!variant_num)
+		return;
+	odds /= variant_num;
+	HSBoard copy(*this);
+	bool first = true;
+
+	for (auto i = 0u; i < side.real_size; i++) {
+		if ((buff.tribe == attributes::Tribe::All) ||
+		    (side.buf[i].tribe & buff.tribe)) {
+			if (first) {
+				side.buf[i].attack += buff.attack;
+				side.buf[i].health += buff.health;
+				side.buf[i].skill |= buff.skill;
+				first = false;
+				continue;
+			}
+			HSBoard b(copy);
+			BoardSide &b_side = my ? b.my_side : b.enemy_side;
+			b_side.buf[i].attack += buff.attack;
+			b_side.buf[i].health += buff.health;
+			b_side.buf[i].skill |= buff.skill;
+			b.process_deathrattles();
+		}
+	}
 }
 
 void HSBoard::trigger_bomb(bool my)
