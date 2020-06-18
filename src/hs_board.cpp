@@ -73,12 +73,12 @@ void HSBoard::print()
 	cout << "-----\n";
 }
 
-int HSBoard::add_next_states()
+int HSBoard::add_next_states(bool windfury)
 {
 	if (target_side->empty() || attack_side->empty())
 		return 0;
 
-	if (attack_side->increase_attacker) {
+	if (attack_side->increase_attacker && !windfury) {
 		attack_side->attacker++;
 		if (attack_side->attacker >= attack_side->size()) {
 			attack_side->attacker = 0;
@@ -88,24 +88,29 @@ int HSBoard::add_next_states()
 	attack_side->increase_attacker = true;
 
 	int taunt_count = 0;
-	// calculate number of taunts
-	for (unsigned i = 0; i < target_side->size(); i++)
+	int target_num = 0;
+	// calculate number of targets
+	for (unsigned i = 0; i < target_side->size(); i++) {
+		if ((*target_side)[i].health <= 0)
+			continue;
 		if ((*target_side)[i].skill & attributes::Taunt)
 			taunt_count++;
+		target_num++;
+	}
 
-	int target_num = (taunt_count) ? taunt_count : target_side->size();
+	target_num = (taunt_count) ? taunt_count : target_num;
 	odds /= target_num;
 
 	for (unsigned i = 0; i < target_side->size(); i++) {
 		if (((*target_side)[i].skill & attributes::Taunt) || !taunt_count) {
 			HSBoard new_state(*this);
-			new_state.process_attack(i);
+			new_state.process_attack(i, windfury);
 		}
 	}
 	return 1;
 }
 
-void HSBoard::process_attack(unsigned t)
+void HSBoard::process_attack(unsigned t, bool windfury)
 {
 	int damage = (*attack_side)[attack_side->attacker].attack;
 	bool cleave =
@@ -122,7 +127,12 @@ void HSBoard::process_attack(unsigned t)
 			target_side->take_damage(damage, t - 1);
 	}
 
-	process_deathrattles();
+	if (((*attack_side)[attack_side->attacker].health > 0) && (!windfury) &&
+	    ((*attack_side)[attack_side->attacker].skill & attributes::Windfury))
+		add_next_states(true);
+	else
+		process_deathrattles();
+
 	return;
 }
 

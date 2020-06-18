@@ -3,9 +3,8 @@
 
 void init_vec(BoardSide &v, unsigned long attack, int health, unsigned num)
 {
-	HSMinion m(attack, health);
 	for (unsigned i = 0; i < num; i++)
-		v.push_back(m);
+		v.push_back({attack, health});
 }
 
 // 1;2 1;2  1;2  1;2
@@ -44,13 +43,11 @@ TEST(test, basic_fight)
 // rat bomb
 TEST(test, rat_and_bomb)
 {
+	BoardSide enemy;
+	init_vec(enemy, 2, 2, 3);
 	BoardSide my;
-	init_vec(my, 2, 2, 2);
-	BoardSide enemy = my;
-
-	enemy.push_back(HSMinion(2, 2));
-	my[0].deathrattles = attributes::Deathrattle::Rat;
-	my[1].deathrattles = attributes::Deathrattle::Bomb;
+	my.push_back(Rat);
+	my.push_back(Bomb);
 
 	HSBoard b(my, enemy);
 	ASSERT_DOUBLE_EQ(b.calc_odds(), 0.75);
@@ -79,9 +76,9 @@ TEST(test, cleave)
 TEST(test, coiler)
 {
 	BoardSide my;
-	my.push_back(HSMinion(Coiler));
+	my.push_back(Coiler);
 	BoardSide enemy;
-	enemy.push_back(HSMinion(7, 16));
+	enemy.push_back({7, 16});
 	HSBoard b(enemy, my);
 	ASSERT_DOUBLE_EQ(0.25, b.calc_odds());
 }
@@ -94,14 +91,28 @@ TEST(test, coiler)
 TEST(test, buff_deathrattles)
 {
 	BoardSide enemy;
-	enemy.push_back(HSMinion(Goldrinn));
-	enemy.push_back(HSMinion(Rat));
+	enemy.push_back(Goldrinn);
+	enemy.push_back(Rat);
 	BoardSide my;
-	my.push_back(HSMinion(Nzoth));
-	my.push_back(HSMinion(Selfless));
-	my.push_back(HSMinion(5, 5));
+	my.push_back(Nzoth);
+	my.push_back(Selfless);
+	my.push_back({5, 5});
 	HSBoard b(my, enemy);
 	ASSERT_DOUBLE_EQ(1. / 6, b.calc_odds());
+}
+
+TEST(test, windfury)
+{
+	BoardSide my;
+	my.push_back(HSMinion(6, 7, attributes::Deathrattle::No, 0,
+	                      attributes::Skill::Windfury));
+	my.push_back({1, 1});
+	my.push_back({1, 1});
+	BoardSide enemy;
+	enemy.push_back({100, 4});
+	enemy.push_back({6, 6});
+	HSBoard b(my, enemy);
+	ASSERT_DOUBLE_EQ(b.calc_odds(), .5);
 }
 
 int main(int argc, char **argv)

@@ -4,7 +4,7 @@ constexpr unsigned BombDamage = 4;
 
 namespace attributes {
 
-enum Deathrattle {
+enum class Deathrattle {
 	No = 0,
 	Rat,
 	Bomb,
@@ -26,6 +26,7 @@ enum Skill {
 	Shield = 1,
 	Taunt = 1 << 1,
 	Cleave = 1 << 2,
+	Windfury = 1 << 3,
 };
 
 } // namespace attributes

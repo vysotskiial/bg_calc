@@ -63,8 +63,8 @@ private:
 	void trigger_buff_random(bool my, const HSMinion &buff);
 	bool my_turn;
 	void print();
-	int add_next_states();
-	void process_attack(unsigned t);
+	int add_next_states(bool windfury = false);
+	void process_attack(unsigned t, bool windfury);
 	void process_deathrattles();
 	void swap_sides();
 	bool won() { return !my_side.empty(); }
