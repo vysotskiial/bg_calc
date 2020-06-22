@@ -10,7 +10,7 @@ class BoardSide {
 	friend class HSBoard;
 
 private:
-	HSMinion buf[MAX_MINIONS];
+	std::array<HSMinion, MAX_MINIONS> buf;
 	unsigned real_size{0};
 	unsigned attacker{0};
 	bool increase_attacker{false};
@@ -35,11 +35,13 @@ public:
 			attacker = 0;
 		if (idx == real_size)
 			return;
-		memmove(buf + idx, buf + idx + 1, (real_size - idx) * sizeof(HSMinion));
+		std::move(buf.begin() + idx + 1, buf.begin() + real_size + 1,
+		          buf.begin() + idx);
 	}
 	void insert(unsigned pos, unsigned count, const HSMinion &m)
 	{
-		memmove(buf + pos + count, buf + pos, (real_size - pos) * sizeof(HSMinion));
+		std::move_backward(buf.begin() + pos, buf.begin() + real_size,
+		                   buf.begin() + real_size + count);
 		for (unsigned i = 0; i < count; i++)
 			buf[pos + i] = m;
 		real_size += count;
